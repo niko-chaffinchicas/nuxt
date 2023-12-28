@@ -140,8 +140,17 @@ export default defineNuxtModule<Partial<ImportsOptions>>({
 function addDeclarationTemplates (ctx: Unimport, options: Partial<ImportsOptions>) {
   const nuxt = useNuxt()
 
-  // Remove file extension for benefit of TypeScript
-  const stripExtension = (path: string) => path.replace(/\.[a-z]+$/, '')
+  // Remove file extension for benefit of TypeScript, but only if it doesn't cause issues
+  // with files that have multiple dots in them (e.g. "example.store.ts")
+  const stripExtension = (path: string) => {
+    const file = path.split('/').pop();
+    // If there's only one dot in the file, or it's a .d.ts file,
+    // go ahead and remove the file extension
+    if ((file && file.split('.').length <= 2) || file.match(/\.d\.[a-z]+$/)) {
+      return path.replace(/\.[a-z]+$/, '');
+    }
+    return path;
+  }
 
   const resolvedImportPathMap = new Map<string, string>()
   const r = ({ from }: Import) => resolvedImportPathMap.get(from)
